@@ -7,6 +7,106 @@
   50% { opacity: 0.88; }
 }
 
+@keyframes screenShake {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(-4px, 4px) rotate(-0.5deg); }
+  50% { transform: translate(4px, -2px) rotate(0.5deg); }
+  75% { transform: translate(-2px, -4px) rotate(-0.25deg); }
+}
+
+@keyframes floatUp {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-100px) scale(0); opacity: 0; }
+}
+
+@keyframes spiral {
+  0% { 
+    transform: rotate(0deg) translateX(0) translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% { 
+    transform: rotate(720deg) translateX(var(--spread-x)) translateY(var(--spread-y)) scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.7; }
+  100% { transform: scale(0); opacity: 0; }
+}
+
+@keyframes trail {
+  0% { 
+    transform: translateX(0) translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% { 
+    transform: translateX(var(--trail-x)) translateY(var(--trail-y)) scale(0);
+    opacity: 0;
+  }
+}
+
+.screen-shake {
+  animation: screenShake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+.particle-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  pointer-events: none;
+}
+
+.particle-basic {
+  width: 8px;
+  height: 8px;
+  background: #4fd1c5;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #4fd1c5, 0 0 20px #4fd1c5;
+}
+
+.particle-star {
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  box-shadow: 0 0 15px #fff, 0 0 25px #4fd1c5;
+}
+
+.particle-spark {
+  width: 3px;
+  height: 12px;
+  background: linear-gradient(to bottom, #fff, #4fd1c5);
+  border-radius: 2px;
+  box-shadow: 0 0 8px #4fd1c5;
+}
+
+.particle-ring {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #4fd1c5;
+  border-radius: 50%;
+  box-shadow: 0 0 15px #4fd1c5;
+}
+
+.particle-trail {
+  width: 4px;
+  height: 4px;
+  background: #4fd1c5;
+  border-radius: 50%;
+  opacity: 0.8;
+  box-shadow: 0 0 8px #4fd1c5;
+}
+
 .tron-bg {
   background-image: 
     linear-gradient(to right, rgba(79, 209, 197, 0.1) 1px, transparent 1px),

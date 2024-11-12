@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { RotateCcw, Zap } from 'lucide-react';
 import Die3D from './components/Die3D';
 import ScoreCard from './components/ScoreCard';
+import ParticleSystem from './components/ParticleSystem';
 
 function App() {
   const [dice1, setDice1] = useState(1);
@@ -11,6 +12,89 @@ function App() {
   const [highScore, setHighScore] = useState(0);
   const [message, setMessage] = useState('');
   const [sequence, setSequence] = useState(1);
+  const [isShaking, setIsShaking] = useState(false);
+  const [particlePosition, setParticlePosition] = useState<{ x: number; y: number } | null>(null);
+
+  const createParticle = useCallback((x: number, y: number, container: HTMLDivElement, type: string) => {
+    const particle = document.createElement('div');
+    particle.className = `particle ${type}`;
+    particle.style.left = `${x}px`;
+    particle.style.top = `${y}px`;
+    
+    // Random spread for different directions
+    const angle = Math.random() * Math.PI * 2;
+    const distance = Math.random() * 100 + 50;
+    particle.style.setProperty('--spread-x', `${Math.cos(angle) * distance}px`);
+    particle.style.setProperty('--spread-y', `${Math.sin(angle) * distance}px`);
+    
+    // Random trail effect
+    particle.style.setProperty('--trail-x', `${(Math.random() - 0.5) * 100}px`);
+    particle.style.setProperty('--trail-y', `${-Math.random() * 100 - 50}px`);
+    
+    container.appendChild(particle);
+
+    const animations = {
+      'particle-basic': [
+        { transform: 'scale(1) translate(0, 0)', opacity: 1 },
+        { transform: `scale(0) translate(${Math.random() * 100 - 50}px, ${-Math.random() * 100}px)`, opacity: 0 }
+      ],
+      'particle-star': [
+        { transform: 'rotate(0deg) scale(1)', opacity: 1 },
+        { transform: 'rotate(360deg) scale(0)', opacity: 0 }
+      ],
+      'particle-spark': [
+        { transform: `rotate(${Math.random() * 360}deg) translateX(0)`, opacity: 1 },
+        { transform: `rotate(${Math.random() * 360}deg) translateX(${Math.random() * 100 + 50}px)`, opacity: 0 }
+      ],
+      'particle-ring': [
+        { transform: 'scale(1)', opacity: 1, borderWidth: '2px' },
+        { transform: 'scale(2)', opacity: 0, borderWidth: '0px' }
+      ],
+      'particle-trail': {
+        duration: 1000,
+        easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        fill: 'forwards',
+        iterations: 1
+      }
+    };
+
+    const animation = particle.animate(
+      animations[type as keyof typeof animations] || animations['particle-basic'],
+      {
+        duration: 1000 + Math.random() * 500,
+        easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        fill: 'forwards'
+      }
+    );
+
+    animation.onfinish = () => particle.remove();
+  }, []);
+
+  const spawnParticles = useCallback((x: number, y: number) => {
+    const container = document.querySelector('.particle-container') as HTMLDivElement;
+    if (!container) return;
+
+    const particleTypes = [
+      'particle-basic',
+      'particle-star',
+      'particle-spark',
+      'particle-ring',
+      'particle-trail'
+    ];
+
+    // Spawn multiple waves of particles
+    for (let wave = 0; wave < 3; wave++) {
+      setTimeout(() => {
+        for (let i = 0; i < 8; i++) {
+          particleTypes.forEach(type => {
+            const offsetX = (Math.random() - 0.5) * 20;
+            const offsetY = (Math.random() - 0.5) * 20;
+            createParticle(x + offsetX, y + offsetY, container, type);
+          });
+        }
+      }, wave * 100);
+    }
+  }, [createParticle]);
 
   const rollDice = () => {
     if (isRolling) return;
@@ -27,6 +111,21 @@ function App() {
       setDice1(finalDice1);
       setDice2(finalDice2);
       setIsRolling(false);
+      setIsShaking(true);
+      
+      // Get dice positions for particle effects
+      const dice1El = document.querySelector('.dice-container:first-child');
+      const dice2El = document.querySelector('.dice-container:last-child');
+      
+      if (dice1El) {
+        const rect1 = dice1El.getBoundingClientRect();
+        spawnParticles(rect1.left + rect1.width / 2, rect1.top + rect1.height / 2);
+      }
+      
+      if (dice2El) {
+        const rect2 = dice2El.getBoundingClientRect();
+        spawnParticles(rect2.left + rect2.width / 2, rect2.top + rect2.height / 2);
+      }
       
       const total = finalDice1 + finalDice2;
       if (finalDice1 === finalDice2) {
@@ -35,7 +134,10 @@ function App() {
       } else {
         setScore(prev => prev + total);
       }
-    }, 6500); // Match animation duration
+
+      // Remove screen shake after animation
+      setTimeout(() => setIsShaking(false), 500);
+    }, 6500);
   };
 
   const resetGame = () => {
@@ -61,7 +163,8 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-teal-300 tron-bg">
-      <div className="container mx-auto px-4 py-8">
+      <div className={`container mx-auto px-4 py-8 relative ${isShaking ? 'screen-shake' : ''}`}>
+        <ParticleSystem active={isRolling} position={particlePosition} />
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-teal-500 tron-glow">
